@@ -22,6 +22,11 @@ def load_job_data(file_path='jobs_data.csv'):
 # Load job listings at startup
 job_listings = load_job_data()
 
+# Pre-calculate TF-IDF for job descriptions
+vectorizer = TfidfVectorizer(stop_words='english')
+job_descriptions = [job['Job_Description'].lower() for job in job_listings]
+job_tfidf = vectorizer.fit_transform(job_descriptions) if job_descriptions else None
+
 @app.route('/')
 def index():
     return render_template('index.html')
@@ -57,16 +62,13 @@ def upload_file():
     return render_template('results.html', jobs=matched_jobs, dropdown_locations=dropdown_locations)
 
 def match_jobs(resume_skills, threshold=0.4):
-    """Matches resume skills with job descriptions using TF-IDF + Cosine Similarity."""
-    resume_text = ' '.join(resume_skills).lower()
-    job_descriptions = [job['Job_Description'].lower() for job in job_listings]
-
-    if not job_descriptions:
+    """
+    Matches resume skills with job descriptions using pre-calculated TF-IDF.
+    """
+    if job_tfidf is None:
         return []
 
-    # TF-IDF Vectorization
-    vectorizer = TfidfVectorizer(stop_words='english')
-    job_tfidf = vectorizer.fit_transform(job_descriptions)
+    resume_text = ' '.join(resume_skills).lower()
     resume_tfidf = vectorizer.transform([resume_text])
 
     # Compute similarity

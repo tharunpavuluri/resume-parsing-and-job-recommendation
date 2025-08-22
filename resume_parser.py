@@ -92,16 +92,17 @@ def extract_text_from_docx(file):
         return ""
 
 
+# Initialize the PhraseMatcher and add skill patterns only once
+matcher = PhraseMatcher(nlp.vocab, attr='LOWER')
+patterns = [nlp.make_doc(skill) for skill in SKILLS]
+matcher.add("SKILLS", patterns)
+
 def extract_skills(text):
     """
-    Extracts matching skills from text using spaCy PhraseMatcher.
+    Extracts matching skills from text using a pre-built spaCy PhraseMatcher.
     """
     text = text.lower()
     doc = nlp(text)
-
-    matcher = PhraseMatcher(nlp.vocab, attr='LOWER')
-    patterns = [nlp.make_doc(skill) for skill in SKILLS]
-    matcher.add("SKILLS", patterns)
 
     matches = matcher(doc)
     found_skills = {doc[start:end].text for _, start, end in matches}
